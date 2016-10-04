@@ -12,3 +12,5 @@ sumSquaredError <- function(theta, hypothesisCB) {
 linearRegression <-function(row, parameters) {
   target <- 1 + sum(row * parameters)
 }
+
+# another commet
