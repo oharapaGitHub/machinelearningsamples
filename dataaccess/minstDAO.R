@@ -1,22 +1,4 @@
 # read the mnist dataset
-
-load_image_file <- function(filename) {
-  ret = list()
-  # rb = read binary (to the best of my abilities)
-  f = file(filename,'rb')
-  # this is saying read one column?  n = 1, the number of items to read ?
-  # the size states the number of bytes to read, and this is important,
-  # an integer is 4 bytes, and unsigned byte is 1
-  readBin(f,'integer',n=1,size=4,endian='big')
-  ret$n = readBin(f,'integer',n=1,size=4,endian='big')
-  nrow = readBin(f,'integer',n=1,size=4,endian='big')
-  ncol = readBin(f,'integer',n=1,size=4,endian='big')
-  x = readBin(f,'integer',n=ret$n*nrow*ncol,size=1,signed=F)
-  ret$x = matrix(x, ncol=nrow*ncol, byrow=T)
-  close(f)
-  ret
-}
-
 readImageData <- function(location) {
   to.read <- file(location, "rb")
   
