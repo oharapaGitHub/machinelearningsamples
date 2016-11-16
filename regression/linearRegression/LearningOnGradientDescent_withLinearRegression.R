@@ -1,32 +1,43 @@
 
+# source of the lession
+# - 
 ex2.readData <- function() {
-  setwd("C:/Users/i310684/Documents/career/sap/Data Science Team Fellowship/data/ex2_data")
-  x <- read.table("ex2x.dat",header = FALSE)
-  y <- read.table("ex2y.dat",header = FALSE)
-  return(c(x,y))
+  wd <- getwd()
+  modeldata <- read.table(paste(wd,"/data/ex2_data/ex2x.dat",sep=""), col.names=c("x"), header = FALSE)
+  y <- read.table(paste(wd,"/data/ex2_data/ex2y.dat",sep=""), col.names=c("y"), header = FALSE)
+  modeldata$y <- y$y
+  return(modeldata)
 }
 
 ex2.plot <- function(data) {
-  plot(x=data[1]$V1,y=data[2]$V1, xlab = "Height in Meters", ylab = "Age in years")
+  plot(x=data[[1]],y=data[[2]], xlab = "Height in Meters", ylab = "Age in years")
 } 
 
 ex2.addInterceptToX <- function(data) {
   # function to add a column of ones to the x column in the dataset
-  boundData <- cbind(rep(1),data)
-  ## access through newD[,1], newD[,2]
-  return(list("x0"=boundData[,1], "x1"=boundData[,2]))
+  return(cbind(rep(1),data))
 }
 ex2.generateTheta <- function(data) {
-  theta0 <- numeric(length(data[[1]]))
-  theta1 <- numeric(length(data[[1]]))
-  return(list("theta0"=theta0, "theta1"=theta1))
+  theta0 <- numeric(nrow(data[[1]]))
+  theta1 <- numeric(nrow(data[[1]]))
+  
+  return(matrix(c(theta0,theta1), nrow=nrow(data[[1]]), ncol=2, byrow = FALSE))
 }
 
+ex2.getGradientDescentData <- function() {
+  
+  # read the data
+  ex2Data <- ex2.readData()
+  ex2.plot(ex2Data)
+  ex2Data[[1]] <- ex2.addInterceptToX(ex2Data[[1]])
+  thetaData <- ex2.generateTheta(ex2Data)
+  return(ex2Data)
+}
 ex2.all <- function() {
   ex2Data <- ex2.readData()
   ex2.plot(ex2Data)
   ex2Data[[1]] <- ex2.addInterceptToX(ex2Data[[1]])
-  thetaData <- ex2.generateTheta(data)
+  ex2Data$thetas <- ex2.generateTheta(ex2Data)
   return(ex2Data)
 }
 
@@ -40,6 +51,57 @@ ex2.linearRegressWithGradientDescent <- function(data, target, thetas) {
     return(sum(input$data * input$theta))
   }
   
+  ###
+  # in this attemptI will look to create a dataframe where each column is a list
+  # with the required data.
+  # I will then try 'apply' an expression to do what I need'
+  ###
+  secondAttemptAtGradientDescent <- function (data,thetas,target, thetaindex) {
+    
+    #
+    # general outline of the formula to apply is
+    # algorithm, minus the target, times the x for the theta in particualr
+    # data frame will be
+    # all x values, the y value, then another row of the x[i] the theta is in relation to
+    # 
+    # step 1, first get list of all x values
+    # step 2, get lsit of y
+    # step 3, get list of x related to theta
+    # step 4 combine
+    
+    indexNames <- names(data$V1)
+    thetaNames <- names(thetas)
+    dataout <- c()
+    thetaout <- c()
+    #rows - for each item of data
+    for(i in 1:length(data$V1$x0)) {
+      
+      targety <- target[i]
+      # columns - apply the learning algorithm
+      for(j in 1:length(data$V1)) {
+        
+        dataRef <- indexNames[j]
+        thetaRef <- thetaNames[j]
+        dataout <- append(dataout,unlist(data$V1[dataRef])[i])
+        thetaout <- append(thetaout,unlist(thetas[thetaRef])[i])    
+      }
+      # at this point I am ready to call linear regression, and finish the algorithm
+      # then just reset
+      summedLinear <- linearRegression(list("data"=dataout,"theta"=thetaout))
+      
+      ## do the minus 
+      linMinusTarget <- summedLinear - targety
+      
+      ## now it is multiply by x theta index is related to
+      
+      
+      ## reset 
+      dataout <- c()
+      thetaout <- c()
+      
+    }
+    return (list("data"=dataout,"theta"=thetaout))
+  }
   
   
   #####
@@ -47,6 +109,8 @@ ex2.linearRegressWithGradientDescent <- function(data, target, thetas) {
   # the I need to get the deriviative of it.
   # the below formulas are the partial derviate 
   # thetaZeroExp <- expression((1/m) * (sum(linearRegression(data, thetas)-target)))
+  
+  
   resolveGradientDescentExpression <- function (data,thetas,target, thetaindex) {
     indexNames <- names(data$V1)
     thetaNames <- names(thetas)
