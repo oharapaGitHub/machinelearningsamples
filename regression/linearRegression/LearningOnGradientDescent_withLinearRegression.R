@@ -43,6 +43,7 @@ ex2.all <- function() {
 
 ex2.linearRegress <- function(data) {
   # don't believe it
+  # think the correct answer is to use sweep # todo try with sweep
   resullt <- sum(data$x %*% c(0,0) - data$y)
   ##return ((data$x %*% data$thetas)) - data$y
   return(resullt)
@@ -55,6 +56,7 @@ ex2.linearRegressWithGradientDescent <- function(data, target, thetas) {
   ## this needs to be row access
   linearRegression <- function(input) {
     ## this will do it all but... I need to take y away, and muliply by the xrelated to theta
+    ## this the
     return(sum(input$data * input$theta))
   }
   
