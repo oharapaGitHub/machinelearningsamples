@@ -41,6 +41,13 @@ ex2.all <- function() {
   return(ex2Data)
 }
 
+ex2.linearRegress <- function(data) {
+  # don't believe it
+  resullt <- sum(data$x %*% c(0,0) - data$y)
+  ##return ((data$x %*% data$thetas)) - data$y
+  return(resullt)
+}
+
 ex2.linearRegressWithGradientDescent <- function(data, target, thetas) {
   
   m <- length(data$X0)
