@@ -1,3 +1,10 @@
+###
+# this script works through exercise three, which studies the relationship between the cost
+# function and the learning rate alpha
+# it also attempts to manipulate the cost function to make it generic and allow the application
+# of other cost function.
+# namely huber, also want to look at taylors.
+###
 
 # clear the workspace
 rm(list = ls())
@@ -46,7 +53,7 @@ ex2.all <- function(alpha = 0.07,n.rounds=1500) {
   
   initialThetas <- matrix(thetaData)
   for(index in 1:n.rounds) {
-
+    
     thetaData <- ex2.linearRegressWithGradientDescentSecondAttempt(ex2Data$x, ex2Data$y, thetaData, alpha)
     if(index == 1) {
       initialThetas <-thetaData
@@ -54,7 +61,7 @@ ex2.all <- function(alpha = 0.07,n.rounds=1500) {
   }
   
   ## need to plot my thetas... 
-
+  
   plot(x=ex2Data$x[,2],y=ex2Data$y, xlab = "Height in Meters", ylab = "Age in years")
   lines(x=ex2Data$x[,2],y=ex2Data$x %*% thetaData)
   return (c(initialThetas,thetaData))
@@ -65,7 +72,7 @@ ex2.linearRegressWithGradientDescentSecondAttempt <- function(xdata, target, inT
   for(thetaIndex in 1:nrow(inThetas)) {
     linRegressionResult <- ex2.linearRegress(data = xdata, thetas = inThetas)
     linRegressionLessTarget <- linRegressionResult - target
-
+    
     vectorToSum <-  linRegressionLessTarget * xdata[,thetaIndex]
     tempThetas[thetaIndex] <- (inThetas[thetaIndex] - (alpha *(sum(vectorToSum)/nrow(xdata))))
   }
