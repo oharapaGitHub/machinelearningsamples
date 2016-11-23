@@ -11,66 +11,103 @@ rm(list = ls())
 
 # source of the lession
 # - 
-ex2.readData <- function() {
+ex3.readData <- function() {
   wd <- getwd()
-  modeldata <- read.table(paste(wd,"/data/ex2_data/ex2x.dat",sep=""), col.names=c("x"), header = FALSE)
-  y <- read.table(paste(wd,"/data/ex2_data/ex2y.dat",sep=""), col.names=c("y"), header = FALSE)
-  modeldata$y <- y$y
-  return(modeldata)
+  modeldata <- read.table(paste(wd,"/data/ex3_data/ex3x.dat",sep=""), header = FALSE)
+  y <- read.table(paste(wd,"/data/ex3_data/ex3y.dat",sep=""), col.names=c("y"), header = FALSE)
+  return(list(x=modeldata, y=y$y))
 }
 
-ex2.plot <- function(data) {
-  plot(x=data[[1]],y=data[[2]], xlab = "Height in Meters", ylab = "Age in years")
+ex3.scaleXdata <- function(data) {
+
+  scaledataCallback <- function(xcolumn) {
+    return ((xcolumn - mean(xcolumn))/sd(xcolumn))
+  }
+  scaledData <- apply(data,2,scaledataCallback)
+  
+  return (scaledData)
 } 
 
-ex2.addInterceptToX <- function(data) {
+ex3.addInterceptToX <- function(data) {
   # function to add a column of ones to the x column in the dataset
   return(cbind(rep(1),data))
 }
 
-ex2.generateThetaAlt <- function(data) {
+ex3.generateThetaAlt <- function(data) {
   # generated a theta based on the number columns a m*n, where m
   # equals the number of columns
   theta <- numeric(ncol(data))
   matrix(data=theta,nrow=length(theta),ncol = 1)
 }
 
-ex2.generateTheta <- function(data) {
-  theta0 <- numeric(nrow(data[[1]]))
-  theta1 <- numeric(nrow(data[[1]]))
-  
-  return(matrix(c(theta0,theta1), nrow=nrow(data[[1]]), ncol=2, byrow = FALSE))
-}
 
 
-ex2.all <- function(alpha = 0.07,n.rounds=1500) {
+ex3.all <- function(alpha = 0.07,n.rounds=50) {
   par(pch=22, col="red") # plotting symbol and color
   par(mar=c(1,1,1,1))  # all plots on one page 
-  ex2Data <- ex2.readData()
-  ex2.plot(ex2Data)
-  ex2Data[[1]] <- ex2.addInterceptToX(ex2Data[[1]])
-  thetaData <- ex2.generateThetaAlt(ex2Data)
+  ex3Data <- ex3.readData()
+  ex3Data$x <- ex3.scaleXdata(ex3Data$x)
+  ex3Data$x <- ex3.addInterceptToX(ex3Data$x)
+  thetaData <- ex3.generateThetaAlt(ex3Data$x)
+
   
   initialThetas <- matrix(thetaData)
+  costData <- c()
   for(index in 1:n.rounds) {
     
-    thetaData <- ex2.linearRegressWithGradientDescentSecondAttempt(ex2Data$x, ex2Data$y, thetaData, alpha)
+    output <- ex3.linearRegressWithCostCalculation(ex3Data$x, ex3Data$y, thetaData, alpha)
     if(index == 1) {
-      initialThetas <-thetaData
+      initialThetas <-output$theta
     }
+    thetaData <- output$theta
+    costData <- append(costData,output$cost)
   }
+
   
-  ## need to plot my thetas... 
+  ## need to plot my cost 
+  costMatrix <- matrix(costData)
+  costMatrix <- cbind(costMatrix, 1:n.rounds)
+  plot(x=costMatrix[,2],y=costMatrix[,1], type='l')
   
-  plot(x=ex2Data$x[,2],y=ex2Data$y, xlab = "Height in Meters", ylab = "Age in years")
-  lines(x=ex2Data$x[,2],y=ex2Data$x %*% thetaData)
-  return (c(initialThetas,thetaData))
+  #plot(x=ex2Data$x[,2],y=ex2Data$y, xlab = "Height in Meters", ylab = "Age in years")
+  #lines(x=ex2Data$x[,2],y=ex2Data$x %*% thetaData)
+  return (list(lastiter =output,thetas=output$theta,costdata=costData))
 }
 
-ex2.linearRegressWithGradientDescentSecondAttempt <- function(xdata, target, inThetas, alpha) {
-  tempThetas = matrix(data = inThetas, nrow = nrow(inThetas), ncol = 1)
+#
+#I need
+# to calculate the cost, and see it decreasing.
+ex3.linearRegressWithCostCalculation <- function(xdata, target, inThetas, alpha) {
+  tempThetas <- matrix(data = inThetas, nrow = nrow(inThetas), ncol = 1)  
+  # calcaulte the cost for the original thetas
+
+
+  
+  linRegressionResult <- ex3.linearRegress(data = xdata, thetas = inThetas)
+  linRegressionLessTarget <- linRegressionResult - target
+  vectorToSum <-  linRegressionLessTarget ^ 2  
+  summedVector <- sum(vectorToSum)
+  OneOverTwoM <- 2*nrow(xdata)
+  cost <- summedVector/OneOverTwoM
+
   for(thetaIndex in 1:nrow(inThetas)) {
-    linRegressionResult <- ex2.linearRegress(data = xdata, thetas = inThetas)
+    linRegressionResult <- ex3.linearRegress(data = xdata, thetas = inThetas)
+    linRegressionLessTarget <- linRegressionResult - target
+    
+    vectorToSum <-  linRegressionLessTarget * xdata[,thetaIndex]
+    tempThetas[thetaIndex] <- (inThetas[thetaIndex] - (alpha *(sum(vectorToSum)/nrow(xdata))))
+  }
+  inThetas <- tempThetas
+  return(list(cost=cost, thetas=inThetas))
+}
+
+#
+# The extrea step i need to do here, is in addition to calculating the thetas, I need
+# to calculate the cost, and see it decreasing.
+ex3.linearRegressWithGradientDescentSecondAttempt <- function(xdata, target, inThetas, alpha) {
+  tempThetas <- matrix(data = inThetas, nrow = nrow(inThetas), ncol = 1)
+  for(thetaIndex in 1:nrow(inThetas)) {
+    linRegressionResult <- ex3.linearRegress(data = xdata, thetas = inThetas)
     linRegressionLessTarget <- linRegressionResult - target
     
     vectorToSum <-  linRegressionLessTarget * xdata[,thetaIndex]
@@ -78,7 +115,7 @@ ex2.linearRegressWithGradientDescentSecondAttempt <- function(xdata, target, inT
   }
   inThetas <- tempThetas
 }
-ex2.linearRegress <- function(data, thetas) {
+ex3.linearRegress <- function(data, thetas) {
   # don't believe it
   # think the correct answer is to use sweep # todo try with sweep
   data %*% thetas
